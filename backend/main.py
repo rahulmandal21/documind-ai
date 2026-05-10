@@ -13,7 +13,7 @@ import docx
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+
 
 import requests
 import os
@@ -21,11 +21,8 @@ from dotenv import load_dotenv
 from groq import Groq
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-embeddings = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2",
-    model_kwargs={"device": "cpu"},
-    encode_kwargs={"batch_size": 8, "normalize_embeddings": True},
-)
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 # ─── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
 
