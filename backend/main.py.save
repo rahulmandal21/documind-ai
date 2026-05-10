@@ -1,4 +1,6 @@
-# ─── Imports ──────────────────────────────────────────────────────────────────
+from langchain_community.embeddings import FakeEmbeddings
+embeddings = FakeEmbeddings(size=384)from langchain_community.embeddings import FakeEmbeddings
+embeddings = FakeEmbeddings(size=384)# ─── Imports ──────────────────────────────────────────────────────────────────
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,8 +23,12 @@ from dotenv import load_dotenv
 from groq import Groq
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-from langchain_community.embeddings import FakeEmbeddings
-embeddings = FakeEmbeddings(size=384)
+from langchain_huggingface import HuggingFaceEmbeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"normalize_embeddings": True},
+)
 # ─── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
 
