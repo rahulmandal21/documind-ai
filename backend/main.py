@@ -20,16 +20,17 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-from langchain_community.embeddings import FakeEmbeddings
-embeddings = FakeEmbeddings(size=384)
+groq_api_key = os.environ.get("GROQ_API_KEY")
+client = Groq(api_key=groq_api_key)
+from langchain_community.embeddings import HuggingFaceEmbeddings
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 # ─── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

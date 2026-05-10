@@ -336,6 +336,25 @@ const GLOBAL_CSS = `
     pointer-events: none;
     opacity: 0.4;
   }
+    @media (max-width: 640px) {
+    .mobile-hide { display: none !important; }
+    .mobile-sidebar-drawer {
+      position: fixed !important;
+      left: 0; top: 0; bottom: 0;
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      width: 280px !important;
+    }
+    .mobile-sidebar-drawer.open {
+      transform: translateX(0);
+    }
+    .mobile-full { width: 100% !important; }
+    .mobile-pad { padding: 8px 12px !important; }
+    .mobile-msg-pad { padding: 12px 14px !important; }
+    .copy-btn { opacity: 1 !important; }
+    .regen-btn { opacity: 1 !important; }
+  }
 `;
 
 // ─── Background Scene ─────────────────────────────────────────────────────────
@@ -384,7 +403,7 @@ function BackgroundScene() {
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
-function TopNavbar({ onClearChat, onOpenTutor, tutorMode }: { onClearChat: () => void; onOpenTutor: () => void; tutorMode: boolean; }) {
+function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobile }: { onClearChat: () => void; onOpenTutor: () => void; tutorMode: boolean; onOpenSidebar: () => void; isMobile: boolean; }) {
   return (
     <header className="glass-panel" style={{
       height: "56px", display: "flex", alignItems: "center",
@@ -416,6 +435,17 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode }: { onClearChat: () =>
           background: "rgba(139,92,246,0.15)", color: "#a78bfa",
           border: "1px solid rgba(139,92,246,0.25)", letterSpacing: "0.08em", textTransform: "uppercase",
         }}>AI · v2</span>
+        {isMobile && (
+  <button onClick={onOpenSidebar} style={{
+    width: "30px", height: "30px", borderRadius: "8px", border: "none",
+    background: "rgba(139,92,246,0.1)", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  }}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+)}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -726,7 +756,13 @@ function AiBubble({ msg, onRegenerate, lastAi, onSpeak, onSpeakWithPicker }: {
             )}
           </button>
 
-          <button className="copy-btn" onClick={() => onSpeakWithPicker(msg.id)} style={{
+          <button className="copy-btn" onClick={() => {
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  } else {
+    onSpeakWithPicker(msg.id);
+  }
+}} style={{
             display: "flex", alignItems: "center", gap: "4px", fontSize: "9px",
             color: "#475569", background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.06)", borderRadius: "5px",
@@ -738,7 +774,7 @@ function AiBubble({ msg, onRegenerate, lastAi, onSpeak, onSpeakWithPicker }: {
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
-            Speak
+            {window.speechSynthesis?.speaking ? "⏹ Stop" : "Speak"}
           </button>
 
           {lastAi && (
@@ -1599,6 +1635,15 @@ export default function Home() {
   const [voicePickerMsgId, setVoicePickerMsgId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showPerformance, setShowPerformance] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth <= 640);
+  check();
+  window.addEventListener("resize", check);
+  return () => window.removeEventListener("resize", check);
+}, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -1922,18 +1967,41 @@ setIsThinking(true);
 
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", position: "relative", zIndex: 1 }}>
       <TopNavbar 
-          onClearChat={() => setChatHistory([])} 
-          onOpenTutor={() => setShowTutorPanel(v => !v)}
-          tutorMode={tutorMode}
-        />
+  onClearChat={() => setChatHistory([])} 
+  onOpenTutor={() => setShowTutorPanel(v => !v)}
+  tutorMode={tutorMode}
+  onOpenSidebar={() => setShowMobileSidebar(v => !v)}
+  isMobile={isMobile}
+/>
 
-        <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-          <Sidebar
-            files={uploadedFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId}
-            onDrop={handleDrop} isDragging={isDragging} setIsDragging={setIsDragging}
-            onFileSelect={handleUpload} onShowHistory={() => setShowHistory(true)} onShowPerformance={() => setShowPerformance(true)}
-          />
+<div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+  {isMobile && showMobileSidebar && (
+    <div
+      onClick={() => setShowMobileSidebar(false)}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 40,
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(4px)",
+      }}
+    />
+  )}
 
+  <div className={isMobile ? `mobile-sidebar-drawer ${showMobileSidebar ? "open" : ""}` : ""}>
+    <Sidebar
+      files={uploadedFiles}
+      activeFileId={activeFileId}
+      onSelectFile={setActiveFileId}
+      onDrop={handleDrop}
+      isDragging={isDragging}
+      setIsDragging={setIsDragging}
+      onFileSelect={handleUpload}
+      onShowHistory={() => setShowHistory(true)}
+      onShowPerformance={() => setShowPerformance(true)}
+    />
+  </div>
+</div>
           <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
             <div style={{
               position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)",
@@ -1943,7 +2011,7 @@ setIsThinking(true);
             }} />
 
             {/* Messages */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", display: "flex", flexDirection: "column", gap: "18px", position: "relative", zIndex: 1, minHeight: 0 }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 14px" : "24px 32px", display: "flex", flexDirection: "column", gap: "18px", position: "relative", zIndex: 1, minHeight: 0 }}>
               {chatHistory.length === 0 && !isThinking ? (
                 <EmptyState onPrompt={p => handleAsk(p)} />
               ) : (
@@ -1971,7 +2039,7 @@ setIsThinking(true);
 
             {/* Input area */}
             <div style={{
-              padding: "12px 24px 18px", position: "relative", zIndex: 1,
+              padding: isMobile ? "8px 12px 14px" : "12px 24px 18px", position: "relative", zIndex: 1,
               borderTop: "1px solid rgba(139,92,246,0.08)",
               background: "rgba(3,5,15,0.7)", backdropFilter: "blur(20px)",
             }}>
