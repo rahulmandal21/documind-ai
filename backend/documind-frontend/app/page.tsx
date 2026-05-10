@@ -435,21 +435,25 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobil
           background: "rgba(139,92,246,0.15)", color: "#a78bfa",
           border: "1px solid rgba(139,92,246,0.25)", letterSpacing: "0.08em", textTransform: "uppercase",
         }}>AI · v2</span>
-        {isMobile && (
-  <button onClick={onOpenSidebar} style={{
-    width: "30px", height: "30px", borderRadius: "8px", border: "none",
-    background: "rgba(139,92,246,0.1)", cursor: "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center",
-  }}>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
-      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
-)}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <button onClick={onClearChat} style={{
+      {isMobile && (
+        <button onClick={onOpenSidebar} style={{
+          width: "32px", height: "32px", borderRadius: "8px", border: "none",
+          background: "rgba(139,92,246,0.1)", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          position: "absolute", left: "50%", transform: "translateX(-50%)",
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      )}
+
+<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+<button onClick={onClearChat}style={{
           display: "flex", alignItems: "center", gap: "6px",
           fontSize: "11px", color: "#64748b", background: "rgba(255,255,255,0.03)",
           border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px",
@@ -506,7 +510,7 @@ function Sidebar({ files, activeFileId, onSelectFile, onDrop, isDragging, setIsD
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
-    <aside className="glass-sidebar" style={{ width: "240px", flexShrink: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 5 }}>
+    <aside className="glass-sidebar" style={{ width: "100%", height: "100%", flexShrink: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 5 }}>
       <div style={{ padding: "12px", borderBottom: "1px solid rgba(139,92,246,0.08)" }}>
         <div
           className={`upload-zone ${isDragging ? "dragging" : ""}`}
@@ -1974,35 +1978,55 @@ setIsThinking(true);
   isMobile={isMobile}
 />
 
-<div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+<div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden", position: "relative" }}>
+
   {isMobile && showMobileSidebar && (
     <div
       onClick={() => setShowMobileSidebar(false)}
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 40,
+        position: "fixed", inset: 0, zIndex: 40,
         background: "rgba(0,0,0,0.5)",
         backdropFilter: "blur(4px)",
       }}
     />
   )}
 
-  <div className={isMobile ? `mobile-sidebar-drawer ${showMobileSidebar ? "open" : ""}` : ""}>
-    <Sidebar
-      files={uploadedFiles}
-      activeFileId={activeFileId}
-      onSelectFile={setActiveFileId}
-      onDrop={handleDrop}
-      isDragging={isDragging}
-      setIsDragging={setIsDragging}
-      onFileSelect={handleUpload}
-      onShowHistory={() => setShowHistory(true)}
-      onShowPerformance={() => setShowPerformance(true)}
-    />
-  </div>
-</div>
-          <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+{!isMobile ? (
+    <div style={{ width: "240px", flexShrink: 0 }}>
+      <Sidebar
+        files={uploadedFiles}
+        activeFileId={activeFileId}
+        onSelectFile={setActiveFileId}
+        onDrop={handleDrop}
+        isDragging={isDragging}
+        setIsDragging={setIsDragging}
+        onFileSelect={handleUpload}
+        onShowHistory={() => setShowHistory(true)}
+        onShowPerformance={() => setShowPerformance(true)}
+      />
+    </div>
+  ) : (
+    <div style={{
+      position: "fixed", left: 0, top: 0, bottom: 0,
+      zIndex: 50, width: "260px",
+      transform: showMobileSidebar ? "translateX(0)" : "translateX(-100%)",
+      transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)",
+    }}>
+      <Sidebar
+        files={uploadedFiles}
+        activeFileId={activeFileId}
+        onSelectFile={setActiveFileId}
+        onDrop={handleDrop}
+        isDragging={isDragging}
+        setIsDragging={setIsDragging}
+        onFileSelect={handleUpload}
+        onShowHistory={() => setShowHistory(true)}
+        onShowPerformance={() => setShowPerformance(true)}
+      />
+    </div>
+  )}
+
+  <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
             <div style={{
               position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)",
               width: "60%", height: "40%",
@@ -2044,7 +2068,12 @@ setIsThinking(true);
               background: "rgba(3,5,15,0.7)", backdropFilter: "blur(20px)",
             }}>
               {/* Smart Chips - always visible */}
-<div style={{ display: "flex", gap: "6px", marginBottom: "10px", overflowX: "auto", paddingBottom: "4px" }}>
+              <div style={{
+  display: "flex", gap: "6px", marginBottom: "10px",
+  overflowX: "auto", paddingBottom: "4px",
+  msOverflowStyle: "none", scrollbarWidth: "none",
+  WebkitOverflowScrolling: "touch",
+}}>
   {[
     "Summarize the document",
     "Generate 10 MCQs",
