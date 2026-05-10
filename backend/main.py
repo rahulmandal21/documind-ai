@@ -21,8 +21,12 @@ from dotenv import load_dotenv
 from groq import Groq
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
-embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+from langchain_huggingface import HuggingFaceEmbeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"normalize_embeddings": True},
+)
 # ─── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
 
