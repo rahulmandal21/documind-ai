@@ -17,11 +17,6 @@ An intelligent AI-powered document assistant that lets users upload files and in
 - **Frontend:** React (Next.js), TypeScript
 - **Backend:** FastAPI, LangChain, FAISS, HuggingFace Embeddings, Groq (LLaMA 3)
 
-## 🌐 Live Demo
-
-- Frontend: https://documind-ai-pearl.vercel.app
-- Backend: https://documind-ai-cscq.onrender.com
-
 ## ⚙️ Setup
 
 1. Clone the repo
