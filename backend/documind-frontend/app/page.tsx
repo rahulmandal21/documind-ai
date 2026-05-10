@@ -1722,7 +1722,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", uploadFile);
 
-      const res = await fetch("http://127.0.0.1:8000/upload", { method: "POST", body: formData });
+      const res = await fetch("https://rahul-m23-documind-ai.hf.space/upload", { method: "POST", body: formData });
       const data = await res.json();
       clearInterval(interval);
       setActiveFileId(fileEntry.id);
@@ -1735,7 +1735,7 @@ export default function Home() {
           await new Promise(r => setTimeout(r, 2000));
           attempts++;
           try {
-            const statusRes = await fetch(`http://127.0.0.1:8000/status/${fileId}`);
+            const statusRes = await fetch(`https://rahul-m23-documind-ai.hf.space/status/${fileId}`);
             const statusData = await statusRes.json();
 
             setUploadedFiles(prev => prev.map(f =>
