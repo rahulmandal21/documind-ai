@@ -8,7 +8,7 @@ python-docx
 langchain-text-splitters
 langchain-community
 faiss-cpu
-sentence-transformers
+sentence-transformers==2.2.2
 groq
 python-dotenv
 requests
