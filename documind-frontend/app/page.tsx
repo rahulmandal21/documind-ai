@@ -726,7 +726,13 @@ function AiBubble({ msg, onRegenerate, lastAi, onSpeak, onSpeakWithPicker }: {
             )}
           </button>
 
-          <button className="copy-btn" onClick={() => onSpeakWithPicker(msg.id)} style={{
+          <button className="copy-btn" onClick={() => {
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  } else {
+    onSpeakWithPicker(msg.id);
+  }
+}} style={{
             display: "flex", alignItems: "center", gap: "4px", fontSize: "9px",
             color: "#475569", background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.06)", borderRadius: "5px",
@@ -738,7 +744,7 @@ function AiBubble({ msg, onRegenerate, lastAi, onSpeak, onSpeakWithPicker }: {
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
-            Speak
+            {window.speechSynthesis?.speaking ? "⏹ Stop" : "Speak"}
           </button>
 
           {lastAi && (
