@@ -1620,10 +1620,10 @@ export default function Home() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const getSessionId = () => {
     if (typeof window === "undefined") return "";
-    let id = sessionStorage.getItem("documind_session");
+    let id = localStorage.getItem("documind_session");
     if (!id) { 
       id = genId(); 
-      sessionStorage.setItem("documind_session", id); 
+      localStorage.setItem("documind_session", id); 
     }
     return id;
   };
