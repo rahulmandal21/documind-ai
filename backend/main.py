@@ -1,5 +1,5 @@
 # ─── Imports ──────────────────────────────────────────────────────────────────
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -36,7 +36,7 @@ app.add_middleware(
 )
 
 # ─── Global state ─────────────────────────────────────────────────────────────
-vector_db = None
+vector_db_store: dict = {}  # { session_id: FAISS vector_db }
 
 # { file_id: { "status": "processing"|"ready"|"error", "message": str, "chunks": int } }
 upload_status: dict = {}
@@ -52,6 +52,7 @@ class AskRequest(BaseModel):
     history: Optional[List[HistoryMessage]] = []
     tutor_mode: Optional[bool] = False
     system_prompt: Optional[str] = None
+    session_id: Optional[str] = None  # ← per-user isolation
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -72,10 +73,6 @@ def extract_text(file_location: str, filename: str) -> str:
 
 
 def extract_text_with_pages(file_location: str, filename: str) -> List[dict]:
-    """
-    Returns list of { page: int, text: str } for accurate page tracking.
-    Falls back to single-page for non-PDF formats.
-    """
     pages = []
     if filename.endswith(".pdf"):
         reader = PdfReader(file_location)
@@ -94,10 +91,6 @@ def extract_text_with_pages(file_location: str, filename: str) -> List[dict]:
     return pages
 
 def format_history(history: List[HistoryMessage], max_turns: int = 5) -> str:
-    """
-    Convert the last `max_turns` messages into a readable block for
-    prompt injection. Capped at 5 to keep prompts short.
-    """
     if not history:
         return ""
     recent = history[-max_turns:]
@@ -109,12 +102,6 @@ def format_history(history: List[HistoryMessage], max_turns: int = 5) -> str:
 
 
 def score_confidence(context: str, answer: str) -> str:
-    """
-    Heuristic confidence — no ML needed.
-      high   → solid context, answer shows no uncertainty
-      medium → context present but model hedged
-      low    → thin context or fallback path used
-    """
     if len(context.strip()) < 50:
         return "low"
     uncertainty_signals = [
@@ -134,8 +121,6 @@ def call_ollama(prompt: str) -> str:
         temperature=0.4,
     )
     return response.choices[0].message.content.strip()
-
-
 
 
 def detect_task(query: str) -> str:
@@ -348,17 +333,11 @@ STRICT RULES:
 
 # ─── Background task ──────────────────────────────────────────────────────────
 def process_document_background(
-    file_id: str, file_location: str, filename: str
+    file_id: str, file_location: str, filename: str, session_id: str
 ):
-    """
-    FEATURE 1 — all slow work runs here, after /upload has already returned.
-    Pipeline: text extraction → chunking → batch embedding → FAISS index.
-    upload_status is updated at each step so the frontend can poll /status.
-    """
-    global vector_db
+    global vector_db_store
 
     try:
-        # Step 1 — text extraction (moved OUT of upload handler)
         upload_status[file_id]["message"] = "Extracting text..."
         pages = extract_text_with_pages(file_location, filename)
 
@@ -370,7 +349,6 @@ def process_document_background(
             }
             return
 
-        # Step 2 — chunk per page to preserve accurate page numbers
         upload_status[file_id]["message"] = "Splitting into chunks..."
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=300,
@@ -387,27 +365,30 @@ def process_document_background(
 
         upload_status[file_id]["message"] = "Building FAISS index..."
         BATCH_SIZE = 64
-        vector_db = None
+        session_vdb = None
 
         for i in range(0, len(all_texts), BATCH_SIZE):
             batch_texts = all_texts[i:i + BATCH_SIZE]
             batch_metas = all_metadatas[i:i + BATCH_SIZE]
             batch_vecs  = embeddings.embed_documents(batch_texts)
 
-            if vector_db is None:
-                vector_db = FAISS.from_embeddings(
+            if session_vdb is None:
+                session_vdb = FAISS.from_embeddings(
                     list(zip(batch_texts, batch_vecs)),
                     embeddings,
                     metadatas=batch_metas,
                 )
             else:
-                vector_db.add_embeddings(
+                session_vdb.add_embeddings(
                     list(zip(batch_texts, batch_vecs)),
                     metadatas=batch_metas,
                 )
 
             pct = min(99, int((i + BATCH_SIZE) / len(all_texts) * 100))
             upload_status[file_id]["message"] = f"Indexing… {pct}%"
+
+        # ← Store under this user's session
+        vector_db_store[session_id] = session_vdb
 
         upload_status[file_id] = {
             "status": "ready",
@@ -433,40 +414,33 @@ def home():
 async def upload_file(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
+    session_id: Optional[str] = Form(None),
 ):
-    """
-    FEATURE 1 — non-blocking upload.
-    Only saves the file to disk, then returns immediately.
-    Text extraction + chunking + embedding all run in the background.
-    No more stall at 80%.
-    """
     supported = (".pdf", ".jpg", ".jpeg", ".png", ".docx")
     if not any(file.filename.endswith(ext) for ext in supported):
         return {"error": "Unsupported file format"}
 
     file_id = str(uuid.uuid4())
+    sid = session_id or str(uuid.uuid4())
     file_location = f"uploaded_{file.filename}"
 
-    # Fast — just writes bytes to disk
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Register status entry so /status works from the first poll
     upload_status[file_id] = {
         "status": "processing",
         "message": "File received. Processing in background...",
         "chunks": 0,
     }
 
-    # All slow work goes to the background thread
     background_tasks.add_task(
-        process_document_background, file_id, file_location, file.filename
+        process_document_background, file_id, file_location, file.filename, sid
     )
 
-    # Returns in milliseconds
     return {
         "status": "processing",
         "file_id": file_id,
+        "session_id": sid,
         "message": "File uploaded. Processing in background.",
         "filename": file.filename,
     }
@@ -474,7 +448,6 @@ async def upload_file(
 
 @app.get("/status/{file_id}")
 def get_status(file_id: str):
-    """Poll for background processing progress."""
     if file_id not in upload_status:
         return {"error": "Unknown file_id"}
     return upload_status[file_id]
@@ -482,28 +455,21 @@ def get_status(file_id: str):
 
 @app.post("/ask")
 def ask_question(body: AskRequest):
-    """
-    FEATURE 2 — conversational memory via optional `history` field.
-    FEATURE 3 — structured three-section prompt with anti-hallucination rules.
-    FEATURE 4 — confidence score on every response path.
-    """
-    global vector_db
-
     query = body.query.strip()
+    sid = body.session_id or ""
+    vector_db = vector_db_store.get(sid)
 
     if vector_db is None:
         return {
-            "answer": "Upload a document first 🙂",
+            "answer": "Please upload a document first 🙂",
             "general": True,
             "confidence": "low",
             "sources": [],
         }
 
-    # ── Retrieval ──────────────────────────────────────────────────────────
     docs = vector_db.similarity_search(query, k=8)
     context = "\n\n".join([doc.page_content for doc in docs])
 
-    # Build sources list for frontend highlighting
     sources = [
         {
             "page": doc.metadata.get("page", 1),
@@ -512,20 +478,18 @@ def ask_question(body: AskRequest):
         for doc in docs
     ]
 
-    # ── Weak context → skip straight to general fallback ──────────────────
     if len(context.strip()) < 50:
         fallback_answer = call_ollama(
             f"You are a helpful assistant. Answer in 1-2 lines. "
             f"Do NOT make up facts.\n\nQuestion: {query}\nAnswer:"
         )
         return {
-            "answer": f"Not found in document.\n\n{fallback_answer}",
+            "answer": f"Not found in document.\n\nGeneral knowledge: {fallback_answer}",
             "general": True,
             "confidence": "low",
             "sources": [],
         }
 
-    # ── History block (last 5 turns) ──────────────────────────────────────
     history_block = format_history(body.history or [], max_turns=5)
     history_section = (
         f"### Conversation History\n{history_block}\n\n"
@@ -533,14 +497,12 @@ def ask_question(body: AskRequest):
         else ""
     )
 
-    # ── Detect what kind of task the user is asking for ───────────────────
     task = detect_task(query)
     if body.tutor_mode:
         task_instruction = TASK_INSTRUCTIONS["tutor"]
     else:
         task_instruction = TASK_INSTRUCTIONS[task]
 
-    # ── Upgraded task-aware anti-hallucination prompt ─────────────────────
     main_prompt = f"""You are DocuMind AI, a strict document-based assistant.
 Your sole source of truth is the Document Context below.
 
@@ -568,8 +530,7 @@ Your sole source of truth is the Document Context below.
 
     answer = call_ollama(main_prompt)
 
-    # ── Fallback detection (catches both NOT_FOUND variants) ───────────────
-    if (answer.upper().startswith("NOT FOUND") 
+    if (answer.upper().startswith("NOT FOUND")
         or "NOT_FOUND" in answer.upper()
         or "not found in document" in answer.lower()):
         fallback_answer = call_ollama(
@@ -583,11 +544,10 @@ Your sole source of truth is the Document Context below.
             "sources": [],
         }
 
-    # ── FEATURE 4: confidence score ────────────────────────────────────────
     confidence = score_confidence(context, answer)
     return {
         "answer": answer,
         "general": False,
         "confidence": confidence,
-        "sources": sources,   # ← frontend picks this up automatically
+        "sources": sources,
     }

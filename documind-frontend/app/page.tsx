@@ -1618,7 +1618,13 @@ export default function Home() {
   }, []);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-
+  const sessionId = useRef<string>(
+    (() => {
+      let id = localStorage.getItem("documind_session");
+      if (!id) { id = genId(); localStorage.setItem("documind_session", id); }
+      return id;
+    })()
+  );
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
   const [langMode, setLangMode] = useState<LangMode>("en");
@@ -1739,6 +1745,7 @@ export default function Home() {
       setFile(uploadFile);
       const formData = new FormData();
       formData.append("file", uploadFile);
+      formData.append("session_id", sessionId.current);
 
       const res = await fetch("https://rahul-m23-documind-ai.hf.space/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -1828,7 +1835,7 @@ setIsThinking(true);
       const res = await fetch("https://rahul-m23-documind-ai.hf.space/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q, history: historyPayload }),
+        body: JSON.stringify({ query: q, history: historyPayload, session_id: sessionId.current }),
       });
 
       const data = await res.json();
