@@ -130,15 +130,15 @@ def call_ollama(prompt: str) -> str:
                 max_tokens=800,
                 temperature=0.4,
             )
-            logging.info(f"✅ Model used: {model}")
+            print(f"✅ Model used: {model}", flush=True)
             return response.choices[0].message.content.strip()
         except Exception as e:
             err = str(e)
-            logging.warning(f"❌ Model {model} failed: {err}")
+            print(f"❌ Model {model} failed: {err}", flush=True)
             if "429" in err or "rate_limit" in err.lower():
                 continue
             return "⚠️ Something went wrong. Please try again."
-    logging.error("🚨 ALL models exhausted!")
+    print("🚨 ALL models exhausted!", flush=True)
     return "⚠️ Daily AI limit reached across all models. Please try again in a few hours."
 
 def detect_task(query: str) -> str:
