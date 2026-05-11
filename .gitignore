@@ -5,3 +5,8 @@ uploaded_*
 node_modules
 .next
 hf-space/
+backend/venv/
+backend/uploaded_*
+backend/__pycache__/
+venv/
+uploaded_*
