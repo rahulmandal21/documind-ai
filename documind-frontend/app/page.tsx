@@ -415,7 +415,7 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobil
           fontSize: "9px", fontWeight: 600, padding: "2px 7px", borderRadius: "99px",
           background: "rgba(139,92,246,0.15)", color: "#a78bfa",
           border: "1px solid rgba(139,92,246,0.25)", letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>AI · v2</span>
+        }}>AI · BETA</span>
       </div>
 
       
