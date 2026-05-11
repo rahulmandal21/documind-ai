@@ -114,8 +114,10 @@ def score_confidence(context: str, answer: str) -> str:
 
 
 MODELS = [
+    "llama-3.1-8b-instant",
     "llama3-8b-8192",
     "gemma2-9b-it",
+    "mixtral-8x7b-32768",
     "llama-3.3-70b-versatile",
 ]
 
@@ -125,15 +127,18 @@ def call_ollama(prompt: str) -> str:
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
+                max_tokens=800,
                 temperature=0.4,
             )
+            logging.info(f"✅ Model used: {model}")
             return response.choices[0].message.content.strip()
         except Exception as e:
             err = str(e)
+            logging.warning(f"❌ Model {model} failed: {err}")
             if "429" in err or "rate_limit" in err.lower():
                 continue
             return "⚠️ Something went wrong. Please try again."
+    logging.error("🚨 ALL models exhausted!")
     return "⚠️ Daily AI limit reached across all models. Please try again in a few hours."
 
 def detect_task(query: str) -> str:
