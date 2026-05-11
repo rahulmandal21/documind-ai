@@ -2079,9 +2079,44 @@ setIsThinking(true);
                 boxShadow: "0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)",
                 transition: "all 0.25s",
               }}>
-                {uploadedFiles.some(f => f.status === "success") && (
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: "5px", flexShrink: 0,
+                {isMobile && (
+  <>
+    <input
+      type="file"
+      accept=".pdf,.jpg,.jpeg,.png,.docx"
+      id="mobile-upload-input"
+      style={{ display: "none" }}
+      onChange={e => {
+        const f = e.target.files?.[0];
+        if (f) handleUpload(f);
+      }}
+    />
+    <button
+      onClick={() => document.getElementById("mobile-upload-input")?.click()}
+      title="Upload PDF"
+      style={{
+        width: "36px", height: "36px", borderRadius: "10px",
+        cursor: "pointer", flexShrink: 0,
+        background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.2))",
+        border: "1px solid rgba(139,92,246,0.4)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 0 14px rgba(139,92,246,0.35)",
+        transition: "all 0.2s",
+      }}
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke="#c4b5fd" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17,8 12,3 7,8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </button>
+  </>
+)}
+
+{uploadedFiles.some(f => f.status === "success") && (
+  <div style={{
+    display: "flex", alignItems: "center", gap: "5px", flexShrink: 0,
                     background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
                     borderRadius: "7px", padding: "3px 8px",
                   }}>
@@ -2190,6 +2225,42 @@ setIsThinking(true);
             </div>
           </main>
         </div>
+        {isMobile && uploadedFiles.length === 0 && (
+  <>
+    <input
+      type="file"
+      accept=".pdf,.jpg,.jpeg,.png,.docx"
+      id="fab-upload-input"
+      style={{ display: "none" }}
+      onChange={e => {
+        const f = e.target.files?.[0];
+        if (f) handleUpload(f);
+      }}
+    />
+    <button
+      onClick={() => document.getElementById("fab-upload-input")?.click()}
+      style={{
+        position: "fixed", bottom: "110px", right: "18px", zIndex: 60,
+        width: "56px", height: "56px", borderRadius: "16px", border: "none",
+        background: "linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: "3px",
+        boxShadow: "0 0 28px rgba(124,58,237,0.7), 0 8px 24px rgba(0,0,0,0.5)",
+        cursor: "pointer",
+        animation: "tutor-pulse 2s ease infinite",
+      }}
+      title="Upload PDF"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17,8 12,3 7,8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.85)", fontWeight: 700, letterSpacing: "0.05em" }}>PDF</span>
+    </button>
+  </>
+)}
         <TutorAssistant
           tutorMode={tutorMode}
           tutorMsg={tutorMsg}
