@@ -384,7 +384,7 @@ function BackgroundScene() {
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
-function TopNavbar({ onClearChat, onOpenTutor, tutorMode }: { onClearChat: () => void; onOpenTutor: () => void; tutorMode: boolean; }) {
+function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobile }: { onClearChat: () => void; onOpenTutor: () => void; tutorMode: boolean; onOpenSidebar: () => void; isMobile: boolean; }) {
   return (
     <header className="glass-panel" style={{
       height: "56px", display: "flex", alignItems: "center",
@@ -418,8 +418,23 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode }: { onClearChat: () =>
         }}>AI · v2</span>
       </div>
 
+      {isMobile && (
+        <button onClick={onOpenSidebar} style={{
+          width: "32px", height: "32px", borderRadius: "8px", border: "none",
+          background: "rgba(139,92,246,0.1)", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          position: "absolute", left: "50%", transform: "translateX(-50%)",
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <button onClick={onClearChat} style={{
+        <button onClick={onClearChat}style={{
           display: "flex", alignItems: "center", gap: "6px",
           fontSize: "11px", color: "#64748b", background: "rgba(255,255,255,0.03)",
           border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px",
@@ -476,7 +491,7 @@ function Sidebar({ files, activeFileId, onSelectFile, onDrop, isDragging, setIsD
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
-    <aside className="glass-sidebar" style={{ width: "240px", flexShrink: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 5 }}>
+    <aside className="glass-sidebar" style={{ width: "100%", height: "100%", flexShrink: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 5 }}>
       <div style={{ padding: "12px", borderBottom: "1px solid rgba(139,92,246,0.08)" }}>
         <div
           className={`upload-zone ${isDragging ? "dragging" : ""}`}
@@ -1605,6 +1620,16 @@ export default function Home() {
   const [voicePickerMsgId, setVoicePickerMsgId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showPerformance, setShowPerformance] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -1931,14 +1956,42 @@ setIsThinking(true);
           onClearChat={() => setChatHistory([])} 
           onOpenTutor={() => setShowTutorPanel(v => !v)}
           tutorMode={tutorMode}
+          onOpenSidebar={() => setShowMobileSidebar(v => !v)}
+          isMobile={isMobile}
         />
 
-        <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-          <Sidebar
-            files={uploadedFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId}
-            onDrop={handleDrop} isDragging={isDragging} setIsDragging={setIsDragging}
-            onFileSelect={handleUpload} onShowHistory={() => setShowHistory(true)} onShowPerformance={() => setShowPerformance(true)}
-          />
+<div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden", position: "relative" }}>
+
+{isMobile && showMobileSidebar && (
+  <div onClick={() => setShowMobileSidebar(false)} style={{
+    position: "fixed", inset: 0, zIndex: 40,
+    background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+  }} />
+)}
+
+{!isMobile ? (
+  <div style={{ width: "240px", flexShrink: 0 }}>
+    <Sidebar
+      files={uploadedFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId}
+      onDrop={handleDrop} isDragging={isDragging} setIsDragging={setIsDragging}
+      onFileSelect={handleUpload} onShowHistory={() => setShowHistory(true)} onShowPerformance={() => setShowPerformance(true)}
+    />
+  </div>
+) : (
+  <div style={{
+    position: "fixed", left: 0, top: 0, bottom: 0,
+    zIndex: 50, width: "280px",
+    transform: showMobileSidebar ? "translateX(0)" : "translateX(-110%)",
+    transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)",
+    visibility: showMobileSidebar ? "visible" : "hidden",
+  }}>
+    <Sidebar
+      files={uploadedFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId}
+      onDrop={handleDrop} isDragging={isDragging} setIsDragging={setIsDragging}
+      onFileSelect={handleUpload} onShowHistory={() => setShowHistory(true)} onShowPerformance={() => setShowPerformance(true)}
+    />
+  </div>
+)}
 
           <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
             <div style={{
@@ -1949,7 +2002,7 @@ setIsThinking(true);
             }} />
 
             {/* Messages */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", display: "flex", flexDirection: "column", gap: "18px", position: "relative", zIndex: 1, minHeight: 0 }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 14px" : "24px 32px", display: "flex", flexDirection: "column", gap: "18px", position: "relative", zIndex: 1, minHeight: 0 }}>
               {chatHistory.length === 0 && !isThinking ? (
                 <EmptyState onPrompt={p => handleAsk(p)} />
               ) : (
@@ -1977,7 +2030,7 @@ setIsThinking(true);
 
             {/* Input area */}
             <div style={{
-              padding: "12px 24px 18px", position: "relative", zIndex: 1,
+              padding: isMobile ? "8px 12px 14px" : "12px 24px 18px", position: "relative", zIndex: 1,
               borderTop: "1px solid rgba(139,92,246,0.08)",
               background: "rgba(3,5,15,0.7)", backdropFilter: "blur(20px)",
             }}>
@@ -2048,8 +2101,8 @@ setIsThinking(true);
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk(); } }}
                   style={{
                     flex: 1, background: "none", border: "none", outline: "none",
-                    color: "#e2e8f0", fontSize: "13.5px", caretColor: "#a78bfa",
-                    fontFamily: "'Inter', sans-serif",
+                    color: "#e2e8f0", fontSize: isMobile ? "16px" : "13.5px", caretColor: "#a78bfa",
+                    fontFamily: "'Inter', sans-serif", minWidth: 0,
                   }}
                 />
 
