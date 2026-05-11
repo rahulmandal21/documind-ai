@@ -1629,6 +1629,10 @@ export default function Home() {
   };
   
   const sessionId = useRef<string>("");
+
+useEffect(() => {
+  sessionId.current = getSessionId();
+}, []);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
   const [langMode, setLangMode] = useState<LangMode>("en");
