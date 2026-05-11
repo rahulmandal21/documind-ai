@@ -418,20 +418,7 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobil
         }}>AI · v2</span>
       </div>
 
-      {isMobile && (
-        <button onClick={onOpenSidebar} style={{
-          width: "32px", height: "32px", borderRadius: "8px", border: "none",
-          background: "rgba(139,92,246,0.1)", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "absolute", left: "50%", transform: "translateX(-50%)",
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
-      )}
+      
 
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <button onClick={onClearChat}style={{
