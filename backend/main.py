@@ -502,7 +502,7 @@ def ask_question(body: AskRequest):
             "sources": [],
         }
 
-    docs = vector_db.similarity_search(query, k=8)
+    docs = vector_db.similarity_search(query, k=6)
     context = "\n\n".join([doc.page_content for doc in docs])
 
     sources = [
