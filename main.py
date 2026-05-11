@@ -196,8 +196,11 @@ STYLE RULES:
 - Do NOT stop early — cover all major points.""",
 
     "fill_blanks": """TASK: The user wants FILL-IN-THE-BLANK exercises.
-- Generate exactly 3-5 fill-in-the-blank sentences.
+- The user may specify how many they want (e.g. "5 blanks", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat sentences from previous responses.
 - Use ONLY facts from the document context.
+- Do NOT stop early. Complete ALL requested questions.
 - Replace the key term or value with a blank: _______
 - After all blanks, provide an "Answers:" section listing the correct words in order.
 - Format:
@@ -207,7 +210,9 @@ STYLE RULES:
            2) word""",
 
     "quiz": """TASK: The user wants a QUIZ.
-- The user may specify how many questions they want (e.g. "10 MCQs", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 5.
+- The user may specify how many questions they want (e.g. "10 MCQs", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat questions from previous responses.
 - Each question must have 4 options (A, B, C, D).
 - Mark the correct answer clearly after each question.
 - Do NOT stop early. Complete ALL requested questions.
@@ -322,11 +327,17 @@ STRICT RULES:
 - Do NOT write paragraphs — bullets ONLY
 - Do NOT stop early""",
 "true_false": """TASK: Create TRUE/FALSE questions.
-- Generate exactly 5 true/false statements from the document.
+- The user may specify how many they want (e.g. "5 true/false", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat statements from previous responses.
+- Mix of TRUE and FALSE statements (not all TRUE).
+- Do NOT stop early. Complete ALL requested questions.
 - Clearly mark each as TRUE or FALSE.
 - Format:
-  1. Statement — TRUE
-  2. Statement — FALSE
+  1. Statement —
+   TRUE
+  2. Statement —
+   FALSE
 - Give a one-line explanation for each answer.""",
     "tutor": """TASK: You are an expert AI Tutor like Gemini.
 - Explain the answer step by step with clear structure
