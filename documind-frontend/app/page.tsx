@@ -1618,13 +1618,16 @@ export default function Home() {
   }, []);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const sessionId = useRef<string>(
-    (() => {
-      let id = localStorage.getItem("documind_session");
-      if (!id) { id = genId(); localStorage.setItem("documind_session", id); }
-      return id;
-    })()
-  );
+  const sessionId = useRef<string>("");
+
+useEffect(() => {
+  let id = localStorage.getItem("documind_session");
+  if (!id) { 
+    id = genId(); 
+    localStorage.setItem("documind_session", id); 
+  }
+  sessionId.current = id;
+}, []);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
   const [langMode, setLangMode] = useState<LangMode>("en");
