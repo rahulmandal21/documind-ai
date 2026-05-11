@@ -1,3 +1,6 @@
+---
+sdk: docker
+---
 # 🚀 DocuMind AI
 
 An intelligent AI-powered document assistant that lets users upload files and interact with them through natural language.
