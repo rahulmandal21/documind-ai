@@ -321,7 +321,13 @@ STRICT RULES:
 - Use ONLY information from the document context
 - Do NOT write paragraphs — bullets ONLY
 - Do NOT stop early""",
-
+"true_false": """TASK: Create TRUE/FALSE questions.
+- Generate exactly 5 true/false statements from the document.
+- Clearly mark each as TRUE or FALSE.
+- Format:
+  1. Statement — TRUE
+  2. Statement — FALSE
+- Give a one-line explanation for each answer.""",
     "tutor": """TASK: You are an expert AI Tutor like Gemini.
 - Explain the answer step by step with clear structure
 - Use simple language with examples or analogies where helpful

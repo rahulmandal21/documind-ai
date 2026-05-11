@@ -389,7 +389,7 @@ function TopNavbar({ onClearChat, onOpenTutor, tutorMode, onOpenSidebar, isMobil
     <header className="glass-panel" style={{
       height: "56px", display: "flex", alignItems: "center",
       justifyContent: "space-between", padding: "0 20px",
-      position: "relative", zIndex: 10, flexShrink: 0,
+      position: "sticky", top: 0, zIndex: 10, flexShrink: 0,
       borderTop: "none", borderLeft: "none", borderRight: "none",
       borderBottom: "1px solid rgba(139,92,246,0.12)",
     }}>
