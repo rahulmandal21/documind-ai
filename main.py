@@ -114,14 +114,18 @@ def score_confidence(context: str, answer: str) -> str:
 
 
 def call_ollama(prompt: str) -> str:
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=2048,
-        temperature=0.4,
-    )
-    return response.choices[0].message.content.strip()
-
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2048,
+            temperature=0.4,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        if "429" in str(e) or "rate_limit" in str(e).lower():
+            return "⚠️ Daily AI limit reached. Please try again in a few hours. This is a free tier limitation."
+        return "⚠️ Something went wrong. Please try again."
 
 def detect_task(query: str) -> str:
     q = query.lower()
