@@ -5,7 +5,7 @@ sdk: docker
 
 ## 🎥 Demo
 
-[![DocuMind AI Demo](https://img.youtube.com/vi/20Y76dF1a5U/0.jpg)](https://youtu.be/20Y76dF1a5U)
+[![DocuMind AI Demo]([https://img.youtube.com/vi/20Y76dF1a5U/0.jpg)](https://youtu.be/20Y76dF1a5U](https://youtu.be/2OY76dF1a5U))
 
 An intelligent AI-powered document assistant that lets users upload files and interact with them through natural language.
 
