@@ -1632,11 +1632,6 @@ export default function Home() {
 
   useEffect(() => {
     sessionId.current = getSessionId();
-    fetch("https://rahul-m23-documind-ai.hf.space/clear-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `session_id=${sessionId.current}`
-    });
   }, []);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
