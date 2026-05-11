@@ -22,7 +22,7 @@ from groq import Groq
 load_dotenv()
 groq_api_key = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=groq_api_key)
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 # ─── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
@@ -114,13 +114,19 @@ def score_confidence(context: str, answer: str) -> str:
 
 
 def call_ollama(prompt: str) -> str:
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=2048,
-        temperature=0.4,
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2048,
+            temperature=0.4,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        if "429" in str(e) or "rate_limit" in str(e).lower():
+            return "⚠️ Daily AI limit reached. Please try again in a few hours. This is a free tier limitation."
+        return "⚠️ Something went wrong. Please try again."
+        
 
 
 def detect_task(query: str) -> str:
@@ -196,8 +202,11 @@ STYLE RULES:
 - Do NOT stop early — cover all major points.""",
 
     "fill_blanks": """TASK: The user wants FILL-IN-THE-BLANK exercises.
-- Generate exactly 3-5 fill-in-the-blank sentences.
+- The user may specify how many they want (e.g. "5 blanks", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat sentences from previous responses.
 - Use ONLY facts from the document context.
+- Do NOT stop early. Complete ALL requested questions.
 - Replace the key term or value with a blank: _______
 - After all blanks, provide an "Answers:" section listing the correct words in order.
 - Format:
@@ -207,7 +216,9 @@ STYLE RULES:
            2) word""",
 
     "quiz": """TASK: The user wants a QUIZ.
-- The user may specify how many questions they want (e.g. "10 MCQs", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 5.
+- The user may specify how many questions they want (e.g. "10 MCQs", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat questions from previous responses.
 - Each question must have 4 options (A, B, C, D).
 - Mark the correct answer clearly after each question.
 - Do NOT stop early. Complete ALL requested questions.
@@ -321,7 +332,19 @@ STRICT RULES:
 - Use ONLY information from the document context
 - Do NOT write paragraphs — bullets ONLY
 - Do NOT stop early""",
-
+"true_false": """TASK: Create TRUE/FALSE questions.
+- The user may specify how many they want (e.g. "5 true/false", "15 questions"). If specified, generate EXACTLY that many. If not specified, generate 10.
+- Every time this is called, pick DIFFERENT facts from the document.
+- Do NOT repeat statements from previous responses.
+- Mix of TRUE and FALSE statements (not all TRUE).
+- Do NOT stop early. Complete ALL requested questions.
+- Clearly mark each as TRUE or FALSE.
+- Format:
+  1. Statement —
+   TRUE
+  2. Statement —
+   FALSE
+- Give a one-line explanation for each answer.""",
     "tutor": """TASK: You are an expert AI Tutor like Gemini.
 - Explain the answer step by step with clear structure
 - Use simple language with examples or analogies where helpful
@@ -551,3 +574,9 @@ Your sole source of truth is the Document Context below.
         "confidence": confidence,
         "sources": sources,
     }
+
+@app.post("/clear-session")
+async def clear_session(session_id: str = Form(...)):
+    if session_id in vector_db_store:
+        del vector_db_store[session_id]
+    return {"status": "cleared"}
