@@ -534,7 +534,7 @@ function Sidebar({ files, activeFileId, onSelectFile, onDrop, isDragging, setIsD
       <div style={{ padding: "10px 14px", borderTop: "1px solid rgba(139,92,246,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 6px rgba(52,211,153,0.8)", flexShrink: 0 }} />
-          <span style={{ fontSize: "9px", color: "#334155", flex: 1 }}>API · localhost:8000</span>
+          <span style={{ fontSize: "9px", color: "#334155", flex: 1 }}>API · https://rahul-m23-documind-ai.hf.space</span>
           <button onClick={onShowHistory} style={{
             display: "flex", alignItems: "center", gap: "4px",
             fontSize: "9px", color: "#64748b", background: "rgba(139,92,246,0.08)",
