@@ -551,3 +551,9 @@ Your sole source of truth is the Document Context below.
         "confidence": confidence,
         "sources": sources,
     }
+
+@app.post("/clear-session")
+async def clear_session(session_id: str = Form(...)):
+    if session_id in vector_db_store:
+        del vector_db_store[session_id]
+    return {"status": "cleared"}
