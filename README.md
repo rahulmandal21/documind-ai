@@ -3,9 +3,13 @@ sdk: docker
 ---
 # 🚀 DocuMind AI
 
+🌐 **Live:** [documind-ai-pearl.vercel.app](https://documind-ai-pearl.vercel.app)
+
 ## 🎥 Demo
 
-Watch how DocuMind AI works: [![Watch Demo](./demo.png)](https://www.youtube.com/watch?v=2OY76dF1a5U)
+Watch how DocuMind AI works: > 👇🏻 Click the image to watch the demo [![Watch Demo](./demo.png)](https://www.youtube.com/watch?v=2OY76dF1a5U)
+
+
 
 An intelligent AI-powered document assistant that lets users upload files and interact with them through natural language.
 
