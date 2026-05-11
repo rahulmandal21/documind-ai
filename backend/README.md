@@ -3,6 +3,7 @@ title: Documind Ai
 emoji: 📄
 colorFrom: purple
 colorTo: blue
-sdk: docker
+sdk: gradio
+app_file: main.py
 pinned: false
 ---
